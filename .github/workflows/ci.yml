@@ -1,0 +1,94 @@
+name: GameCS checks
+on:
+  push:
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - run: python -m pip install -e '.[test]'
+      - run: python -m pytest -q
+      - name: Verify migrations on an isolated database
+        env:
+          DATABASE_URL: sqlite:///./ci-migration.db
+          JWT_SECRET: ci-only-secret-at-least-32-characters
+          LOCAL_MODE: 'false'
+        run: |
+          alembic upgrade head
+          alembic downgrade -1
+          alembic upgrade head
+  frontend:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app: [player, admin]
+    defaults:
+      run:
+        working-directory: frontend/${{ matrix.app }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/${{ matrix.app }}/package-lock.json
+      - run: npm ci
+      - run: npm run build
+  mysql-integration:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: isolated-test-only
+          MYSQL_DATABASE: gamecs_isolated_ci
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -pisolated-test-only --silent"
+          --health-interval=10s --health-timeout=5s --health-retries=12
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      DATABASE_URL: mysql+pymysql://root:isolated-test-only@127.0.0.1:3306/gamecs_isolated_ci?charset=utf8mb4
+      MYSQL_TEST_URL: mysql+pymysql://root:isolated-test-only@127.0.0.1:3306/gamecs_isolated_ci?charset=utf8mb4
+      JWT_SECRET: isolated-ci-secret-at-least-32-characters
+      LOCAL_MODE: 'false'
+      LOCAL_AUTO_TASKS: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - run: python -m pip install -e '.[test]'
+      - run: alembic upgrade head
+      - run: python -m pytest -q tests/test_mysql_integration.py
+  browser-flow:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: python -m pip install -e './backend[test]'
+      - run: npm ci --prefix frontend/player
+      - run: npm ci --prefix frontend/admin
+      - run: npm ci --prefix frontend/e2e
+      - run: npx playwright install --with-deps chromium
+        working-directory: frontend/e2e
+      - run: npm test
+        working-directory: frontend/e2e

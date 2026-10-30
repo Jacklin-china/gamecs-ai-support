@@ -1,0 +1,76 @@
+{
+  "dataset": "synthetic-v1",
+  "embedding_model": "BAAI/bge-m3",
+  "chat_model": "deepseek-chat",
+  "results": [
+    {
+      "id": "login",
+      "kind": "answer",
+      "expected_ids": [
+        1
+      ],
+      "retrieved_ids": [
+        1
+      ],
+      "source_match": true,
+      "refusal_detected": false,
+      "answer": "根据资料[1]，星海彼岸账号登录失败时，请先确认账号和密码，再检查网络。\n\n如果以上两步都确认无误仍无法登录，资料中没有更多排查步骤的说明，建议您联系人工客服进一步处理。",
+      "seconds": 1.297,
+      "tokens": null,
+      "cost": null,
+      "human_grounding_review": "pending"
+    },
+    {
+      "id": "wrong_game",
+      "kind": "refuse",
+      "expected_ids": [],
+      "retrieved_ids": [],
+      "source_match": true,
+      "refusal_detected": true,
+      "answer": "暂未找到该游戏的相关知识，无法可靠回答。请提交工单并说明遇到的问题，客服会继续处理。",
+      "seconds": 0.203,
+      "tokens": null,
+      "cost": null,
+      "human_grounding_review": "pending"
+    },
+    {
+      "id": "unknown",
+      "kind": "refuse",
+      "expected_ids": [],
+      "retrieved_ids": [],
+      "source_match": true,
+      "refusal_detected": true,
+      "answer": "暂未找到该游戏的相关知识，无法可靠回答。请提交工单并说明遇到的问题，客服会继续处理。",
+      "seconds": 0.265,
+      "tokens": null,
+      "cost": null,
+      "human_grounding_review": "pending"
+    },
+    {
+      "id": "inactive",
+      "kind": "refuse",
+      "expected_ids": [],
+      "retrieved_ids": [],
+      "source_match": true,
+      "refusal_detected": true,
+      "answer": "暂未找到该游戏的相关知识，无法可靠回答。请提交工单并说明遇到的问题，客服会继续处理。",
+      "seconds": 0.188,
+      "tokens": null,
+      "cost": null,
+      "human_grounding_review": "pending"
+    },
+    {
+      "id": "injection",
+      "kind": "refuse",
+      "expected_ids": [],
+      "retrieved_ids": [],
+      "source_match": true,
+      "refusal_detected": true,
+      "answer": "暂未找到该游戏的相关知识，无法可靠回答。请提交工单并说明遇到的问题，客服会继续处理。",
+      "seconds": 0.203,
+      "tokens": null,
+      "cost": null,
+      "human_grounding_review": "pending"
+    }
+  ]
+}

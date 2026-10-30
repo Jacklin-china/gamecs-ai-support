@@ -1,0 +1,18 @@
+{
+  "description": "Synthetic retrieval examples, including two long documents. Not representative of production.",
+  "knowledge": [
+    {"id": 11, "game_id": 1, "title": "账号与安全", "active": true, "sections": ["账号安全：请勿向他人透露密码、验证码或登录凭据。", "设备登录：更换设备后，请确认登录账号和服务器。", "密码重置：在游戏登录页选择找回密码，按绑定方式完成验证。", "二次验证：在账号设置中开启验证，并妥善保存恢复方式。"]},
+    {"id": 12, "game_id": 1, "title": "活动规则", "active": true, "sections": ["活动期间，玩家可以在活动页面查看任务。", "任务奖励以游戏内公告和任务页面显示的规则为准。", "参与条件：完成新手教程后可以进入活动界面。", "奖励领取：完成任务后，请在游戏内邮箱领取奖励。"]},
+    {"id": 13, "game_id": 2, "title": "其他游戏规则", "active": true, "sections": ["另一款游戏的奖励通过活动页面直接领取。"]},
+    {"id": 14, "game_id": 1, "title": "已停用规则", "active": false, "sections": ["停用的特殊兑换码 OLD-INVALID。"]}
+  ],
+  "cases": [
+    {"id": "password", "game_id": 1, "question": "如何重置密码？", "expected_ids": [11]},
+    {"id": "login", "game_id": 1, "question": "换设备后如何确认登录？", "expected_ids": [11]},
+    {"id": "prerequisite", "game_id": 1, "question": "怎样满足活动参与条件？", "expected_ids": [12]},
+    {"id": "rewards", "game_id": 1, "question": "完成活动后奖励在哪里领取？", "expected_ids": [12]},
+    {"id": "wrong_game", "game_id": 2, "question": "账号如何重置密码？", "expected_ids": []},
+    {"id": "inactive", "game_id": 1, "question": "停用的特殊兑换码 OLD-INVALID 是什么？", "expected_ids": []},
+    {"id": "no_answer", "game_id": 1, "question": "服务器明天什么时候维护？", "expected_ids": []}
+  ]
+}

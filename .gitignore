@@ -1,0 +1,44 @@
+# Maven
+target/
+*.jar
+*.war
+*.ear
+
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+application-local.yml
+
+# Node
+node_modules/
+dist/
+
+# Python and local project state
+.venv/
+__pycache__/
+.pytest_cache/
+*.py[cod]
+*.egg-info/
+backend/backups/
+backend/.local/
+data/
+.qoder/
+.workbuddy/
+output/
+generated-images/
+frontend/admin/.chrome-preview/
+test-results/
+playwright-report/

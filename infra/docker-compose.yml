@@ -1,0 +1,75 @@
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: gamecs_new
+      MYSQL_USER: gamecs
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Set MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD}
+    volumes: [mysql_data:/var/lib/mysql]
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+  redis:
+    image: redis/redis-stack:latest
+    environment:
+      REDIS_ARGS: "--appendonly yes --maxmemory-policy noeviction"
+    volumes: [redis_data:/data]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address :9001
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:?Set MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:?Set MINIO_SECRET_KEY}
+    volumes: [minio_data:/data]
+  api:
+    build: ../backend
+    environment: &backend_env
+      DATABASE_URL: mysql+pymysql://gamecs:${MYSQL_PASSWORD}@mysql:3306/gamecs_new?charset=utf8mb4
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET}
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      SILICONFLOW_API_KEY: ${SILICONFLOW_API_KEY:-}
+    ports: ["8000:8000"]
+    depends_on:
+      mysql: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+  worker:
+    build: ../backend
+    command: celery -A app.tasks:celery worker --loglevel=info
+    environment: *backend_env
+    depends_on:
+      api: {condition: service_healthy}
+  scheduler:
+    build: ../backend
+    command: celery -A app.tasks:celery beat --loglevel=info --schedule=/tmp/celerybeat-schedule
+    environment: *backend_env
+    depends_on:
+      api: {condition: service_healthy}
+  player:
+    build: ../frontend/player
+    ports: ["8080:80"]
+    depends_on: [api]
+  admin:
+    build: ../frontend/admin
+    ports: ["8081:80"]
+    depends_on: [api]
+volumes:
+  mysql_data:
+  redis_data:
+  minio_data:

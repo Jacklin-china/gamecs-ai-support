@@ -1,0 +1,95 @@
+{
+  "dataset": "synthetic-chunks-v1",
+  "embedding_model": "BAAI/bge-m3",
+  "chunk_version": "chars-600-overlap-100-v1",
+  "threshold_cosine": 0.6,
+  "whole_records": 3,
+  "chunk_records": 5,
+  "results": [
+    {
+      "id": "password",
+      "expected_ids": [
+        11
+      ],
+      "whole_ids": [
+        11
+      ],
+      "chunk_ids": [
+        11
+      ],
+      "whole_match": true,
+      "chunk_match": true,
+      "query_seconds": 0.141
+    },
+    {
+      "id": "login",
+      "expected_ids": [
+        11
+      ],
+      "whole_ids": [
+        11
+      ],
+      "chunk_ids": [
+        11
+      ],
+      "whole_match": true,
+      "chunk_match": true,
+      "query_seconds": 0.125
+    },
+    {
+      "id": "prerequisite",
+      "expected_ids": [
+        12
+      ],
+      "whole_ids": [],
+      "chunk_ids": [],
+      "whole_match": false,
+      "chunk_match": false,
+      "query_seconds": 0.109
+    },
+    {
+      "id": "rewards",
+      "expected_ids": [
+        12
+      ],
+      "whole_ids": [
+        12
+      ],
+      "chunk_ids": [
+        12
+      ],
+      "whole_match": true,
+      "chunk_match": true,
+      "query_seconds": 0.109
+    },
+    {
+      "id": "wrong_game",
+      "expected_ids": [],
+      "whole_ids": [],
+      "chunk_ids": [],
+      "whole_match": true,
+      "chunk_match": true,
+      "query_seconds": 0.094
+    },
+    {
+      "id": "inactive",
+      "expected_ids": [],
+      "whole_ids": [],
+      "chunk_ids": [],
+      "whole_match": true,
+      "chunk_match": true,
+      "query_seconds": 0.094
+    },
+    {
+      "id": "no_answer",
+      "expected_ids": [],
+      "whole_ids": [],
+      "chunk_ids": [],
+      "whole_match": true,
+      "chunk_match": true,
+      "query_seconds": 0.094
+    }
+  ],
+  "token_usage": null,
+  "cost": null
+}
