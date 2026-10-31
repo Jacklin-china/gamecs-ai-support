@@ -6,7 +6,10 @@ from pathlib import Path
 import pytest
 from celery.contrib.testing.worker import start_worker
 from fastapi import HTTPException
+from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.embeddings import Embeddings
+from langgraph.checkpoint.redis import RedisSaver
+from langgraph.graph import START, MessagesState, StateGraph
 from redis import Redis
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
@@ -88,6 +91,21 @@ def test_redis_rate_limit(redis_stack, monkeypatch):
     assert exc.value.status_code == 429
 
 
+def test_redis_conversation_checkpoint_can_resume_and_delete(redis_stack):
+    workflow = StateGraph(MessagesState)
+    workflow.add_node("reply", lambda state: {"messages": [AIMessage(content="synthetic response")]})
+    workflow.add_edge(START, "reply")
+    config = {"configurable": {"thread_id": "gamecs-ci-synthetic-thread"}}
+    with RedisSaver.from_conn_string(URL) as saver:
+        saver.setup()
+        graph = workflow.compile(checkpointer=saver)
+        graph.invoke({"messages": [HumanMessage(content="first")]}, config)
+        resumed = graph.invoke({"messages": [HumanMessage(content="second")]}, config)
+        assert [m.content for m in resumed["messages"]] == ["first", "synthetic response", "second", "synthetic response"]
+        saver.delete_thread(config["configurable"]["thread_id"])
+        assert saver.get_tuple(config) is None
+
+
 def test_celery_worker_consumes_redis_delivery(redis_stack, monkeypatch, tmp_path):
     db_path = Path(tmp_path) / "worker.db"
     engine = create_engine(f"sqlite:///{db_path}", connect_args={"check_same_thread": False})
@@ -96,6 +114,13 @@ def test_celery_worker_consumes_redis_delivery(redis_stack, monkeypatch, tmp_pat
     monkeypatch.setattr(tasks, "SessionLocal", factory)
     monkeypatch.setattr(tasks, "analyze_text", lambda content: tasks.Analysis(category="BUG", sentiment_score=2, suggest_reply="synthetic"))
     monkeypatch.setattr(tasks.celery.conf, "broker_url", URL)
+    completed_deliveries = []
+    original_run = tasks.process_analysis.run
+    def observed_run(job_id):
+        result = original_run(job_id)
+        completed_deliveries.append(result)
+        return result
+    monkeypatch.setattr(tasks.process_analysis, "run", observed_run)
     with factory() as db:
         db.add(User(id=1, username="synthetic", display_name="synthetic", password_hash="unused", role="player"))
         db.add(Ticket(id=1, ticket_no="T-CI", player_id=1, game_id=1, category_id=1, title="test", content="test"))
@@ -110,8 +135,9 @@ def test_celery_worker_consumes_redis_delivery(redis_stack, monkeypatch, tmp_pat
             while time.monotonic() < deadline:
                 with factory() as db:
                     job = db.get(AnalysisJob, 1)
-                    if job.status == "completed":
+                    if job.status == "completed" and len(completed_deliveries) == 2:
                         assert job.attempts == 1
+                        assert completed_deliveries == ["completed", "already claimed"]
                         break
                 time.sleep(.1)
             else:

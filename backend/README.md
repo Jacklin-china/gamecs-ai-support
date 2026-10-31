@@ -43,3 +43,7 @@ uvicorn app.main:app --reload --port 18765
 若本机已有 MinIO 可执行文件，可设置 `MINIO_TEST_BINARY` 为其绝对路径，再运行 `pytest -q tests/test_minio_integration.py`。该测试仅启动隔离的临时进程、临时目录和随机端口，不使用现有 MinIO 数据；未设置该变量时测试会跳过。
 
 MySQL 集成测试只允许连接本机上名称以 `gamecs_isolated_` 开头、已执行全部迁移且用户和分类表为空的临时数据库；设置 `MYSQL_TEST_URL` 后运行 `pytest -q tests/test_mysql_integration.py`。测试会向该数据库写入合成记录，不能指向业务库。CI 使用独立 MySQL 服务执行该测试。
+
+Redis Stack、Celery 和 Compose 的集成测试由 GitHub Actions 使用一次性服务执行；Redis 测试使用 `GAMECS_REDIS_TEST_URL=redis://127.0.0.1:16391/0`，并要求实例及索引为空，不能用于现有 Redis。模型与向量服务使用合成替身；真实模型测试结果另见 `evaluation/`。
+
+本地可选对象存储兼容性测试使用 `MINIO_TEST_BINARY` 和 `SILO_TEST_BINARY` 指向两个可执行文件，然后运行 `pytest -q tests/test_silo_migration.py`。测试只创建临时目录：使用 MinIO 写入合成对象、用 Silo 读写、再切回 MinIO 校验。已验证 MinIO RELEASE.2025-09-07T16-13-09Z 与 Silo RELEASE.2026-10-26T00-00-00Z 的单节点基础读写回退；不代表所有历史对象、配置或集群部署均可无风险升级，升级前仍须备份并验证数据副本。
