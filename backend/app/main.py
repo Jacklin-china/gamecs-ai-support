@@ -133,6 +133,7 @@ def list_knowledge(db: DB, _: Staff):
 
 @app.post(PREFIX + "/knowledge", status_code=201)
 def create_knowledge(data: KnowledgeInput, db: DB, user: Staff):
+    _validate_knowledge_game(db, data.game_id)
     item = Knowledge(**data.model_dump())
     db.add(item)
     db.flush()
@@ -147,12 +148,22 @@ def update_knowledge(item_id: int, data: KnowledgeInput, db: DB, user: Staff):
     item = db.get(Knowledge, item_id)
     if not item:
         raise HTTPException(404, "知识不存在")
+    # Historical entries may reference a retired game; they can still be edited
+    # or deactivated, but cannot be moved to or reactivated for an invalid game.
+    if data.game_id != item.game_id or (data.active and not item.active):
+        _validate_knowledge_game(db, data.game_id)
     for key, value in data.model_dump().items():
         setattr(item, key, value)
     _queue_index(db, item.id)
     db.add(AuditEvent(actor_id=user.id, action="knowledge.update", target_type="knowledge", target_id=item.id))
     db.commit()
     return {"id": item.id, "indexed": False, "index_status": "pending"}
+
+
+def _validate_knowledge_game(db: Session, game_id: int):
+    game = db.get(Category, game_id)
+    if not game or not game.active or game.level != 1:
+        raise HTTPException(422, "请选择有效的游戏")
 
 
 @app.delete(PREFIX + "/knowledge/{item_id}")

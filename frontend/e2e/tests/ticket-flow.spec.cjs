@@ -44,3 +44,119 @@ test('player and staff complete a ticket conversation and rating', async ({ brow
   await player.close()
   await staff.close()
 })
+
+test('staff can create and edit knowledge using an existing game', async ({ page }) => {
+  await page.goto('http://127.0.0.1:5176/')
+  await page.getByRole('textbox', {name:'用户名'}).fill('e2e_staff')
+  await page.getByRole('textbox', {name:'密码'}).fill('test-password')
+  await page.getByRole('button', {name:'登录工作台'}).click()
+  await page.getByRole('button', {name:'05 知识库'}).click()
+  await page.getByRole('button', {name:'新增知识'}).click()
+  const dialog = page.getByRole('dialog', {name:'新增知识'})
+  await dialog.getByRole('combobox', {name:'所属游戏'}).selectOption({label:'测试游戏'})
+  await dialog.getByRole('textbox', {name:'标题'}).fill('知识验收条目')
+  await dialog.getByRole('textbox', {name:'内容'}).fill('登录失败时检查网络')
+  await dialog.getByRole('button', {name:'保存知识'}).click()
+  await expect(page.getByRole('heading', {name:'知识验收条目'})).toBeVisible()
+  await expect(page.getByText('索引状态：待处理')).toBeVisible()
+  await page.getByRole('button', {name:'编辑知识'}).click()
+  const editDialog = page.getByRole('dialog', {name:'编辑知识'})
+  await expect(editDialog.getByRole('combobox', {name:'所属游戏'})).toHaveValue('1')
+  await editDialog.getByRole('textbox', {name:'内容'}).fill('登录失败时先检查网络')
+  await editDialog.getByRole('button', {name:'保存知识'}).click()
+  await expect(page.getByText('登录失败时先检查网络')).toBeVisible()
+})
+
+test('staff can see and download a player attachment', async ({ page, request }) => {
+  const login = await request.post('http://127.0.0.1:18766/api/v1/auth/login', {data:{username:'e2e_player',password:'test-password'}})
+  const token = (await login.json()).access_token
+  const created = await request.post('http://127.0.0.1:18766/api/v1/tickets', {
+    headers:{Authorization:`Bearer ${token}`},
+    data:{game_id:1,version_id:2,category_id:3,title:'附件验收工单',content:'请查看附件'}
+  })
+  const ticketId = (await created.json()).id
+  // Real MinIO and access control are tested separately; this verifies browser rendering/download.
+  await page.route(`**/api/v1/tickets/${ticketId}`, async route => {
+    const response = await route.fetch()
+    const body = await response.json()
+    body.images = [{id:4321,name:'示例.png'}]
+    await route.fulfill({response, json:body})
+  })
+  await page.route(`**/api/v1/tickets/${ticketId}/images/4321`, route => route.fulfill({status:200,contentType:'image/png',body:'synthetic image'}))
+  await page.goto('http://127.0.0.1:5176/')
+  await page.getByRole('textbox', {name:'用户名'}).fill('e2e_staff')
+  await page.getByRole('textbox', {name:'密码'}).fill('test-password')
+  await page.getByRole('button', {name:'登录工作台'}).click()
+  await page.getByRole('button', {name:'02 待接工单'}).click()
+  const row = page.locator('article.ticket-row').filter({hasText:'附件验收工单'})
+  await row.getByRole('button', {name:'查看详情'}).click()
+  const download = page.waitForEvent('download')
+  await page.getByRole('button', {name:'下载 示例.png'}).click()
+  expect((await download).suggestedFilename()).toBe('示例.png')
+})
+
+test('expired staff session returns to the login screen', async ({ page }) => {
+  await page.goto('http://127.0.0.1:5176/')
+  await page.getByRole('textbox', {name:'用户名'}).fill('e2e_staff')
+  await page.getByRole('textbox', {name:'密码'}).fill('test-password')
+  await page.getByRole('button', {name:'登录工作台'}).click()
+  await expect(page.getByRole('button', {name:'退出登录'})).toBeVisible()
+  await page.route('**/api/v1/hotspots', route => route.fulfill({status:401,contentType:'application/json',body:'{"detail":"登录已失效"}'}))
+  await page.getByRole('button', {name:'06 热点舆情'}).click()
+  await expect(page.getByRole('button', {name:'登录工作台'})).toBeVisible()
+  expect(await page.evaluate(() => sessionStorage.getItem('gamecs_admin_token'))).toBeNull()
+})
+
+test('administrator can update a user and see the audit entry', async ({ page }) => {
+  await page.goto('http://127.0.0.1:5176/')
+  await page.getByRole('textbox', {name:'用户名'}).fill('e2e_admin')
+  await page.getByRole('textbox', {name:'密码'}).fill('test-password')
+  await page.getByRole('button', {name:'登录工作台'}).click()
+  await page.getByRole('button', {name:'07 账号管理'}).click()
+  const row = page.locator('.user-row').filter({hasText:'e2e_manage'})
+  await row.getByRole('combobox', {name:'e2e_manage 的角色'}).selectOption('staff')
+  await row.getByRole('button', {name:'保存'}).click()
+  await page.getByRole('button', {name:'确定'}).click()
+  await expect(row.getByRole('combobox', {name:'e2e_manage 的角色'})).toHaveValue('staff')
+  await page.getByRole('button', {name:'08 操作记录'}).click()
+  await expect(page.getByRole('button', {name:/user.update/}).first()).toBeVisible()
+})
+
+test('player can ask a question, view sources, reopen and delete a conversation', async ({ page }) => {
+  await page.goto('http://127.0.0.1:5175/')
+  await page.getByRole('textbox', {name:'用户名'}).fill('e2e_player')
+  await page.getByRole('textbox', {name:'密码'}).fill('test-password')
+  await page.getByRole('button', {name:'登录', exact:false}).click()
+  await page.getByRole('button', {name:'客服助手'}).click()
+  await page.getByRole('combobox', {name:'选择游戏'}).selectOption({label:'测试游戏'})
+  await page.getByRole('textbox', {name:'你的问题'}).fill('登录失败怎么办？')
+  await page.getByRole('button', {name:'发送问题'}).click()
+  await expect(page.getByText('请先检查网络。')).toBeVisible()
+  await expect(page.getByText('参考：测试知识')).toBeVisible()
+  await page.getByRole('button', {name:'登录失败怎么办？', exact:true}).click()
+  await expect(page.getByText('参考：测试知识')).toBeVisible()
+  await page.getByRole('button', {name:'删除对话 登录失败怎么办？'}).click()
+  await page.getByRole('button', {name:'确定'}).click()
+  await expect(page.getByText('暂无历史对话')).toBeVisible()
+})
+
+test('switching tickets clears the previous resolution draft', async ({ page, request }) => {
+  const playerLogin = await request.post('http://127.0.0.1:18766/api/v1/auth/login', {data:{username:'e2e_player',password:'test-password'}})
+  const staffLogin = await request.post('http://127.0.0.1:18766/api/v1/auth/login', {data:{username:'e2e_staff',password:'test-password'}})
+  const player = {Authorization:`Bearer ${(await playerLogin.json()).access_token}`}
+  const staff = {Authorization:`Bearer ${(await staffLogin.json()).access_token}`}
+  for (const title of ['结果草稿工单甲', '结果草稿工单乙']) {
+    const created = await request.post('http://127.0.0.1:18766/api/v1/tickets', {headers:player,data:{game_id:1,version_id:2,category_id:3,title,content:'用于验证草稿'}})
+    const id = (await created.json()).id
+    expect((await request.post(`http://127.0.0.1:18766/api/v1/tickets/${id}/assign`, {headers:staff})).ok()).toBeTruthy()
+  }
+  await page.goto('http://127.0.0.1:5176/')
+  await page.getByRole('textbox', {name:'用户名'}).fill('e2e_staff')
+  await page.getByRole('textbox', {name:'密码'}).fill('test-password')
+  await page.getByRole('button', {name:'登录工作台'}).click()
+  await page.getByRole('button', {name:'03 我的处理'}).click()
+  await page.locator('article.ticket-row').filter({hasText:'结果草稿工单甲'}).getByRole('button', {name:'查看详情'}).click()
+  await page.getByRole('textbox', {name:'处理结果'}).fill('只属于工单甲的处理结果')
+  await page.locator('article.ticket-row').filter({hasText:'结果草稿工单乙'}).getByRole('button', {name:'查看详情'}).click()
+  await expect(page.getByRole('textbox', {name:'处理结果'})).toHaveValue('')
+})

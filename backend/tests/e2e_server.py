@@ -13,13 +13,28 @@ from app.auth import hash_password
 from app.db import Base, get_db
 from app.main import app
 from app.models import Category, User
+from app import agent
+from app.config import settings
+from langchain_core.language_models.fake_chat_models import FakeMessagesListChatModel
+from langchain_core.messages import AIMessage
+
+
+class SyntheticChatModel(FakeMessagesListChatModel):
+    def bind_tools(self, tools, **kwargs):
+        return self
+
+
+# Deliberate test doubles: the browser suite never sends requests to paid providers.
+settings().deepseek_api_key = 'isolated-e2e-only'
+agent.retrieve = lambda db, game_id, question: ([{'id': 1, 'title': '测试知识', 'content': '登录失败请先检查网络。'}] if '登录' in question else [])
+agent.ChatOpenAI = lambda **kwargs: SyntheticChatModel(responses=[AIMessage(content='请先检查网络。')])
 
 engine = create_engine('sqlite://', connect_args={'check_same_thread': False}, poolclass=StaticPool)
 Base.metadata.create_all(engine)
 factory = sessionmaker(bind=engine, expire_on_commit=False)
 with factory() as db:
     password = hash_password('test-password')
-    db.add_all([Category(id=1, parent_id=0, name='测试游戏', level=1), Category(id=2, parent_id=1, name='测试版本', level=2), Category(id=3, parent_id=2, name='测试分类', level=3), User(username='e2e_player', display_name='测试玩家', password_hash=password, role='player'), User(username='e2e_staff', display_name='测试客服', password_hash=password, role='staff')])
+    db.add_all([Category(id=1, parent_id=0, name='测试游戏', level=1), Category(id=2, parent_id=1, name='测试版本', level=2), Category(id=3, parent_id=2, name='测试分类', level=3), User(username='e2e_player', display_name='测试玩家', password_hash=password, role='player'), User(username='e2e_staff', display_name='测试客服', password_hash=password, role='staff'), User(username='e2e_admin', display_name='测试管理员', password_hash=password, role='admin'), User(username='e2e_manage', display_name='待管理账号', password_hash=password, role='player')])
     db.commit()
 
 

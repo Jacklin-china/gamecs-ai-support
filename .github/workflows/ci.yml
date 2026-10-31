@@ -73,6 +73,54 @@ jobs:
       - run: python -m pip install -e '.[test]'
       - run: alembic upgrade head
       - run: python -m pytest -q tests/test_mysql_integration.py
+  redis-integration:
+    runs-on: ubuntu-latest
+    services:
+      redis-stack:
+        image: redis/redis-stack:latest
+        ports: ['16391:6379']
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s --health-timeout=5s --health-retries=12
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      GAMECS_REDIS_TEST_URL: redis://127.0.0.1:16391/0
+      REDIS_URL: redis://127.0.0.1:16391/0
+      JWT_SECRET: isolated-ci-secret-at-least-32-characters
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - run: python -m pip install -e '.[test]'
+      - run: python -m pytest -q tests/test_redis_integration.py
+  compose-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      MYSQL_PASSWORD: isolated_mysql_password
+      MYSQL_ROOT_PASSWORD: isolated_mysql_root_password
+      JWT_SECRET: isolated-ci-secret-at-least-32-characters
+      MINIO_ACCESS_KEY: isolated_minio_user
+      MINIO_SECRET_KEY: isolated_minio_password
+      DEEPSEEK_API_KEY: ''
+      SILICONFLOW_API_KEY: ''
+      GAMECS_COMPOSE_TEST: isolated-ci-only
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start disposable application stack
+        run: docker compose -p gamecs-ci -f infra/docker-compose.yml up -d --build --wait --wait-timeout 240
+      - name: Verify application through both web gateways
+        run: python infra/compose_smoke.py
+      - name: Show service logs on failure
+        if: failure()
+        run: docker compose -p gamecs-ci -f infra/docker-compose.yml logs --tail=100
+      - name: Remove disposable stack and volumes
+        if: always()
+        run: docker compose -p gamecs-ci -f infra/docker-compose.yml down --volumes --remove-orphans
   browser-flow:
     runs-on: ubuntu-latest
     steps:

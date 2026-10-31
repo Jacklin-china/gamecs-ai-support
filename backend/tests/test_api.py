@@ -19,7 +19,7 @@ def client():
     Base.metadata.create_all(engine)
     factory = sessionmaker(bind=engine, expire_on_commit=False)
     with factory() as db:
-        db.add_all([Category(id=1, parent_id=0, name="Game", level=1), Category(id=2, parent_id=1, name="Version", level=2), Category(id=3, parent_id=2, name="Issue", level=3), User(username="staff", display_name="Staff", password_hash=hash_password("password"), role="staff")])
+        db.add_all([Category(id=1, parent_id=0, name="Game", level=1), Category(id=2, parent_id=1, name="Version", level=2), Category(id=3, parent_id=2, name="Issue", level=3), Category(id=4, parent_id=0, name="Retired game", level=1, active=False), User(username="staff", display_name="Staff", password_hash=hash_password("password"), role="staff")])
         db.commit()
     def override():
         with factory() as db:
@@ -97,6 +97,28 @@ def test_knowledge_updates_schedule_index_and_audit(client):
     assert client.get("/api/v1/audit", headers=headers).status_code == 403
 
 
+def test_knowledge_rejects_invalid_game_without_breaking_existing_entry(client):
+    headers = login(client, "staff")
+    data = {"game_id": 1, "title": "知识", "content": "内容", "active": True}
+    for invalid_id in (2, 3, 4, 999):
+        assert client.post('/api/v1/knowledge', headers=headers, json={**data, "game_id": invalid_id}).status_code == 422
+    created = client.post('/api/v1/knowledge', headers=headers, json=data)
+    assert created.status_code == 201
+    item_id = created.json()['id']
+    assert client.put(f'/api/v1/knowledge/{item_id}', headers=headers, json={**data, "game_id": 2}).status_code == 422
+    items = client.get('/api/v1/knowledge', headers=headers).json()
+    assert items[0]['game_id'] == 1
+    sessions = app.dependency_overrides[get_db]()
+    db = next(sessions)
+    try:
+        db.get(Category, 1).active = False
+        db.commit()
+    finally:
+        sessions.close()
+    assert client.put(f'/api/v1/knowledge/{item_id}', headers=headers, json={**data, 'active': False}).status_code == 200
+    assert client.put(f'/api/v1/knowledge/{item_id}', headers=headers, json=data).status_code == 422
+
+
 def test_agent_conversations_are_private(client):
     assert client.post("/api/v1/auth/register", json={"username": "p1", "password": "password"}).status_code == 201
     assert client.post("/api/v1/auth/register", json={"username": "p2", "password": "password"}).status_code == 201
@@ -128,6 +150,7 @@ def test_ticket_messages_rating_and_server_filter(client):
     assert client.get('/api/v1/tickets', headers=other, params={"include_total": True}).json()["total"] == 0
     assert client.post(f"/api/v1/tickets/{ticket_id}/rating", headers=player, json={"score": 5}).status_code == 409
     assert client.post(f"/api/v1/tickets/{ticket_id}/transition", headers=staff, json={"status": "CLOSED", "remark": "问题已解决"}).status_code == 200
+    assert client.get(f"/api/v1/tickets/{ticket_id}", headers=player).json()["closed_at"] is not None
     assert client.post(url, headers=player, json={"content": "再次回复"}).status_code == 409
     assert client.post(f"/api/v1/tickets/{ticket_id}/rating", headers=other, json={"score": 5}).status_code == 404
     assert client.post(f"/api/v1/tickets/{ticket_id}/rating", headers=player, json={"score": 5, "comment": "谢谢"}).status_code == 201

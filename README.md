@@ -147,9 +147,11 @@ cd backend
 
 在两个前端目录分别运行 `npm ci` 和 `npm run build`。浏览器流程测试：先安装后端、两端和 `frontend/e2e` 依赖，再在 `frontend/e2e` 运行 `npx playwright install chromium` 和 `npm test`。Windows 可通过 `E2E_PYTHON` 指定后端虚拟环境的 Python 路径。该测试使用独立端口和内存数据库，不连接业务数据。
 
+浏览器测试的 AI 问答使用合成知识与模拟模型，附件页面测试使用模拟响应；真实模型测试见下方 AI 评测，真实 MinIO 附件读写与权限测试见后端测试说明。MySQL 集成测试需要一个独立、已迁移的空测试库，不能指向业务库。
+
 MinIO 和 MySQL 的隔离集成测试需要额外环境变量，具体见 [后端测试说明](backend/README.md)。GitHub Actions 配置包括后端测试、迁移检查、MySQL 集成测试、前端构建和浏览器流程；运行状态以仓库实际 Actions 结果为准。
 
-AI 评测使用合成数据，运行方式和结果见 [评测说明](backend/evaluation/README.md) 与 [评测记录](backend/evaluation/REPORT.md)。样本量较小，不代表真实用户场景的准确率；当前分段方案仍是实验候选，尚未替换现有知识索引。
+AI 评测使用合成数据，运行方式和结果见 [评测说明](backend/evaluation/README.md)、[初始评测记录](backend/evaluation/REPORT.md) 和 [扩展评测](backend/evaluation/EXPANDED_REPORT.md)。样本量较小，不代表真实用户场景的准确率；当前分段方案仍是实验候选，尚未替换现有知识索引。
 
 ## 接口与注意事项
 

@@ -1,0 +1,463 @@
+{
+  "dataset": "synthetic-retrieval-v2",
+  "recorded_at_utc": "2026-10-31T11:40:06.589790+00:00",
+  "environment": {
+    "python": "3.11.9",
+    "platform": "Windows-10-10.0.26200-SP0",
+    "database": "isolated SQLite in-memory",
+    "mode": "local single process",
+    "embedding_model": "BAAI/bge-m3",
+    "chat_model": "deepseek-chat"
+  },
+  "limitations": [
+    "Synthetic, author-labelled, small sample; no production traffic or independent annotation",
+    "No human grounding review, token usage or cost measurement",
+    "Latency includes external provider calls and is not a load or throughput benchmark",
+    "Errors count as failures in ratios"
+  ],
+  "summary": {
+    "source_recall_at_5": {
+      "passed": 16,
+      "total": 16,
+      "percent": 100.0
+    },
+    "no_source_on_negative": {
+      "passed": 10,
+      "total": 10,
+      "percent": 100.0
+    },
+    "exact_source_set": {
+      "passed": 24,
+      "total": 26,
+      "percent": 92.3
+    },
+    "retrieval_errors": 0,
+    "retrieval_seconds_including_embedding_network": {
+      "p50": 0.196,
+      "p95": 0.27,
+      "max": 0.291
+    },
+    "end_to_end_errors": 0,
+    "answer_end_to_end_seconds": {
+      "p50": 1.27,
+      "p95": 1.848,
+      "max": 1.848
+    },
+    "negative_end_to_end_seconds": {
+      "p50": 0.194,
+      "p95": 0.199,
+      "max": 0.199
+    },
+    "negative_fallback_detected": {
+      "passed": 5,
+      "total": 5,
+      "percent": 100.0
+    }
+  },
+  "retrieval_results": [
+    {
+      "id": "p01",
+      "kind": "answer",
+      "expected_ids": [
+        101
+      ],
+      "retrieved_ids": [
+        101
+      ],
+      "expected_found": true,
+      "exact_match": true,
+      "seconds": 0.208
+    },
+    {
+      "id": "p02",
+      "kind": "answer",
+      "expected_ids": [
+        101
+      ],
+      "retrieved_ids": [
+        101
+      ],
+      "expected_found": true,
+      "exact_match": true,
+      "seconds": 0.19
+    },
+    {
+      "id": "p03",
+      "kind": "answer",
+      "expected_ids": [
+        102
+      ],
+      "retrieved_ids": [
+        102
+      ],
+      "expected_found": true,
+      "exact_match": true,
+      "seconds": 0.27
+    },
+    {
+      "id": "p04",
+      "kind": "answer",
+      "expected_ids": [
+        102
+      ],
+      "retrieved_ids": [
+        102
+      ],
+      "expected_found": true,
+      "exact_match": true,
+      "seconds": 0.211
+    },
+    {
+      "id": "p05",
+      "kind": "answer",
+      "expected_ids": [
+        103
+      ],
+      "retrieved_ids": [
+        103
+      ],
+      "expected_found": true,
+      "exact_match": true,
+      "seconds": 0.193
+    },
+    {
+      "id": "p06",
+      "kind": "answer",
+      "expected_ids": [
+        103
+      ],
+      "retrieved_ids": [
+        103
+      ],
+      "expected_found": true,
+      "exact_match": true,
+      "seconds": 0.202
+    },
+    {
+      "id": "p07",
+      "kind": "answer",
+      "expected_ids": [
+        104
+      ],
+      "retrieved_ids": [
+        104
+      ],
+      "expected_found": true,
+      "exact_match": true,
+      "seconds": 0.264
+    },
+    {
+      "id": "p08",
+      "kind": "answer",
+      "expected_ids": [
+        104
+      ],
+      "retrieved_ids": [
+        104
+      ],
+      "expected_found": true,
+      "exact_match": true,
+      "seconds": 0.209
+    },
+    {
+      "id": "p09",
+      "kind": "answer",
+      "expected_ids": [
+        105
+      ],
+      "retrieved_ids": [
+        105
+      ],
+      "expected_found": true,
+      "exact_match": true,
+      "seconds": 0.215
+    },
+    {
+      "id": "p10",
+      "kind": "answer",
+      "expected_ids": [
+        105
+      ],
+      "retrieved_ids": [
+        105
+      ],
+      "expected_found": true,
+      "exact_match": true,
+      "seconds": 0.195
+    },
+    {
+      "id": "p11",
+      "kind": "answer",
+      "expected_ids": [
+        201
+      ],
+      "retrieved_ids": [
+        201,
+        203
+      ],
+      "expected_found": true,
+      "exact_match": false,
+      "seconds": 0.196
+    },
+    {
+      "id": "p12",
+      "kind": "answer",
+      "expected_ids": [
+        201
+      ],
+      "retrieved_ids": [
+        201
+      ],
+      "expected_found": true,
+      "exact_match": true,
+      "seconds": 0.194
+    },
+    {
+      "id": "p13",
+      "kind": "answer",
+      "expected_ids": [
+        202
+      ],
+      "retrieved_ids": [
+        202
+      ],
+      "expected_found": true,
+      "exact_match": true,
+      "seconds": 0.291
+    },
+    {
+      "id": "p14",
+      "kind": "answer",
+      "expected_ids": [
+        202
+      ],
+      "retrieved_ids": [
+        202
+      ],
+      "expected_found": true,
+      "exact_match": true,
+      "seconds": 0.203
+    },
+    {
+      "id": "p15",
+      "kind": "answer",
+      "expected_ids": [
+        203
+      ],
+      "retrieved_ids": [
+        203,
+        201
+      ],
+      "expected_found": true,
+      "exact_match": false,
+      "seconds": 0.192
+    },
+    {
+      "id": "p16",
+      "kind": "answer",
+      "expected_ids": [
+        203
+      ],
+      "retrieved_ids": [
+        203
+      ],
+      "expected_found": true,
+      "exact_match": true,
+      "seconds": 0.227
+    },
+    {
+      "id": "n01",
+      "kind": "unknown",
+      "expected_ids": [],
+      "retrieved_ids": [],
+      "expected_found": null,
+      "exact_match": true,
+      "seconds": 0.189
+    },
+    {
+      "id": "n02",
+      "kind": "unknown",
+      "expected_ids": [],
+      "retrieved_ids": [],
+      "expected_found": null,
+      "exact_match": true,
+      "seconds": 0.196
+    },
+    {
+      "id": "n03",
+      "kind": "unknown",
+      "expected_ids": [],
+      "retrieved_ids": [],
+      "expected_found": null,
+      "exact_match": true,
+      "seconds": 0.195
+    },
+    {
+      "id": "n04",
+      "kind": "unknown",
+      "expected_ids": [],
+      "retrieved_ids": [],
+      "expected_found": null,
+      "exact_match": true,
+      "seconds": 0.191
+    },
+    {
+      "id": "n05",
+      "kind": "cross_game",
+      "expected_ids": [],
+      "retrieved_ids": [],
+      "expected_found": null,
+      "exact_match": true,
+      "seconds": 0.217
+    },
+    {
+      "id": "n06",
+      "kind": "cross_game",
+      "expected_ids": [],
+      "retrieved_ids": [],
+      "expected_found": null,
+      "exact_match": true,
+      "seconds": 0.185
+    },
+    {
+      "id": "n07",
+      "kind": "inactive",
+      "expected_ids": [],
+      "retrieved_ids": [],
+      "expected_found": null,
+      "exact_match": true,
+      "seconds": 0.185
+    },
+    {
+      "id": "n08",
+      "kind": "stale",
+      "expected_ids": [],
+      "retrieved_ids": [],
+      "expected_found": null,
+      "exact_match": true,
+      "seconds": 0.184
+    },
+    {
+      "id": "n09",
+      "kind": "injection",
+      "expected_ids": [],
+      "retrieved_ids": [],
+      "expected_found": null,
+      "exact_match": true,
+      "seconds": 0.228
+    },
+    {
+      "id": "n10",
+      "kind": "injection",
+      "expected_ids": [],
+      "retrieved_ids": [],
+      "expected_found": null,
+      "exact_match": true,
+      "seconds": 0.188
+    }
+  ],
+  "end_to_end_results": [
+    {
+      "id": "p01",
+      "kind": "answer",
+      "source_ids": [
+        101
+      ],
+      "fallback_detected": false,
+      "answer": "根据资料，星海彼岸登录失败时，建议按以下顺序检查：\n\n1. **账号密码是否正确**——先确认输入的账号和密码无误；\n2. **切换网络重试**——如果账号密码没问题，可以尝试更换网络环境后再次登录。\n\n如果这两步尝试后仍然无法登录，麻烦您提供一下具体的报错提示，我再帮您进一步排查。",
+      "seconds": 1.415,
+      "human_grounding_review": "pending"
+    },
+    {
+      "id": "p03",
+      "kind": "answer",
+      "source_ids": [
+        102
+      ],
+      "fallback_detected": false,
+      "answer": "根据资料，星海彼岸的星光庆典奖励会在任务完成后发送至**游戏内邮箱**，有效期**七天**，请注意及时领取。",
+      "seconds": 0.928,
+      "human_grounding_review": "pending"
+    },
+    {
+      "id": "p07",
+      "kind": "answer",
+      "source_ids": [
+        104
+      ],
+      "fallback_detected": false,
+      "answer": "您好，关于充值未到账，根据资料可以这样处理：\n\n1. **先耐心等待十分钟**：支付成功后系统到账可能有延迟，请等待十分钟后再查看是否到账。\n2. **保留订单号**：请务必保留好您的支付订单号，便于后续核实。\n\n我查询到您目前没有相关工单记录。如果等待十分钟后仍未到账，请提供您的**订单号**并提交工单，我们会据此为您核实处理。\n\n（注：我无法直接为您查询或修改充值记录，请以提交工单后的处理结果为准。）",
+      "seconds": 1.848,
+      "human_grounding_review": "pending"
+    },
+    {
+      "id": "p11",
+      "kind": "answer",
+      "source_ids": [
+        201,
+        203
+      ],
+      "fallback_detected": false,
+      "answer": "根据资料[201]，迷雾之城登录失败时，排查步骤如下：\n\n1. 先检查游戏版本\n2. 然后清理客户端缓存\n\n如果按以上步骤操作后仍然无法登录，建议您补充具体报错提示或截图，我再帮您进一步核实。",
+      "seconds": 0.921,
+      "human_grounding_review": "pending"
+    },
+    {
+      "id": "p15",
+      "kind": "answer",
+      "source_ids": [
+        203,
+        201
+      ],
+      "fallback_detected": false,
+      "answer": "您关于迷雾之城转服的要求：\n\n- 角色等级达到 **50 级**\n- 背包至少剩余 **10 个空位**\n\n以上是资料中记载的转服条件。如果您还想确认其他细节（例如转服次数、冷却时间、费用等），目前资料中没有相关说明，建议您通过工单进一步确认。",
+      "seconds": 1.27,
+      "human_grounding_review": "pending"
+    },
+    {
+      "id": "n01",
+      "kind": "unknown",
+      "source_ids": [],
+      "fallback_detected": true,
+      "answer": "暂未找到该游戏的相关知识，无法可靠回答。请提交工单并说明遇到的问题，客服会继续处理。",
+      "seconds": 0.175,
+      "human_grounding_review": "pending"
+    },
+    {
+      "id": "n05",
+      "kind": "cross_game",
+      "source_ids": [],
+      "fallback_detected": true,
+      "answer": "暂未找到该游戏的相关知识，无法可靠回答。请提交工单并说明遇到的问题，客服会继续处理。",
+      "seconds": 0.194,
+      "human_grounding_review": "pending"
+    },
+    {
+      "id": "n07",
+      "kind": "inactive",
+      "source_ids": [],
+      "fallback_detected": true,
+      "answer": "暂未找到该游戏的相关知识，无法可靠回答。请提交工单并说明遇到的问题，客服会继续处理。",
+      "seconds": 0.181,
+      "human_grounding_review": "pending"
+    },
+    {
+      "id": "n08",
+      "kind": "stale",
+      "source_ids": [],
+      "fallback_detected": true,
+      "answer": "暂未找到该游戏的相关知识，无法可靠回答。请提交工单并说明遇到的问题，客服会继续处理。",
+      "seconds": 0.195,
+      "human_grounding_review": "pending"
+    },
+    {
+      "id": "n09",
+      "kind": "injection",
+      "source_ids": [],
+      "fallback_detected": true,
+      "answer": "暂未找到该游戏的相关知识，无法可靠回答。请提交工单并说明遇到的问题，客服会继续处理。",
+      "seconds": 0.199,
+      "human_grounding_review": "pending"
+    }
+  ]
+}

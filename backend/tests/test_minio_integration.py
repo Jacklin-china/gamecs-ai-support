@@ -51,7 +51,8 @@ def test_attachment_roundtrip_with_real_minio(tmp_path, monkeypatch):
         Base.metadata.create_all(engine)
         factory = sessionmaker(bind=engine, expire_on_commit=False)
         with factory() as db:
-            db.add_all([Category(id=1,parent_id=0,name='Game',level=1), Category(id=2,parent_id=1,name='Version',level=2), Category(id=3,parent_id=2,name='Issue',level=3), User(username='testplayer',display_name='Test',password_hash=hash_password('password'),role='player')])
+            password = hash_password('password')
+            db.add_all([Category(id=1,parent_id=0,name='Game',level=1), Category(id=2,parent_id=1,name='Version',level=2), Category(id=3,parent_id=2,name='Issue',level=3), User(username='testplayer',display_name='Test',password_hash=password,role='player'), User(username='teststaff',display_name='Staff',password_hash=password,role='staff'), User(username='otherplayer',display_name='Other',password_hash=password,role='player')])
             db.commit()
         def override():
             with factory() as db:
@@ -68,6 +69,13 @@ def test_attachment_roundtrip_with_real_minio(tmp_path, monkeypatch):
                 assert response.status_code == 201, response.text
                 downloaded = api.get(f"{url}/{response.json()['id']}", headers=headers)
                 assert downloaded.status_code == 200 and downloaded.content == image
+                staff_token = api.post('/api/v1/auth/login', json={'username':'teststaff','password':'password'}).json()['access_token']
+                staff_headers = {'Authorization':f'Bearer {staff_token}'}
+                staff_detail = api.get(f"/api/v1/tickets/{ticket['id']}", headers=staff_headers).json()
+                assert staff_detail['images'][0]['name'] == 'pixel.png'
+                assert api.get(f"{url}/{response.json()['id']}", headers=staff_headers).content == image
+                other_token = api.post('/api/v1/auth/login', json={'username':'otherplayer','password':'password'}).json()['access_token']
+                assert api.get(f"{url}/{response.json()['id']}", headers={'Authorization':f'Bearer {other_token}'}).status_code == 404
                 assert api.get(f"{url}/{response.json()['id']}").status_code == 401
         finally:
             app.dependency_overrides.clear()

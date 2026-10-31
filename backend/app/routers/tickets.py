@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from app.auth import current_user, staff
 from app.config import settings
 from app.db import get_db
-from app.models import AnalysisJob, AuditEvent, Category, Ticket, TicketEvent, TicketImage, TicketMessage, TicketRating, User
+from app.models import AnalysisJob, AuditEvent, Category, Ticket, TicketEvent, TicketImage, TicketMessage, TicketRating, User, now
 from app.schemas import TicketCreate, TicketTransition, TicketMessageInput, TicketRatingInput
 
 router = APIRouter(prefix="/api/v1", tags=["tickets"])
@@ -223,7 +223,10 @@ def transition(ticket_id: int, data: TicketTransition, db: DB, user: Current):
     elif user.role not in ("staff", "admin") or (user.role == "staff" and ticket.handler_id != user.id):
         raise HTTPException(403, "无权处理此工单")
     old_status = ticket.status
-    changed = db.execute(update(Ticket).where(Ticket.id == ticket.id, Ticket.status == old_status).values(status=data.status))
+    values = {"status": data.status}
+    if data.status == "CLOSED":
+        values["closed_at"] = now()
+    changed = db.execute(update(Ticket).where(Ticket.id == ticket.id, Ticket.status == old_status).values(**values))
     if changed.rowcount != 1:
         db.rollback()
         raise HTTPException(409, "工单状态已变化，请刷新")

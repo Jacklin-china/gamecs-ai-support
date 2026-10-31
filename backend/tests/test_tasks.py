@@ -62,6 +62,38 @@ def test_knowledge_index_job_is_idempotent(factory, monkeypatch):
         assert db.get(KnowledgeIndexJob, 1).status == "completed"
 
 
+def test_old_failed_analysis_does_not_replace_new_claim(factory, monkeypatch):
+    from datetime import timedelta
+    def fail_after_reclaim(content):
+        with factory() as db:
+            job = db.get(AnalysisJob, 1)
+            job.started_at += timedelta(seconds=1)
+            job.attempts += 1
+            db.commit()
+        raise RuntimeError("old worker failed")
+    monkeypatch.setattr(tasks, "analyze_text", fail_after_reclaim)
+    assert tasks.process_analysis.run(1) == "failed"
+    with factory() as db:
+        job = db.get(AnalysisJob, 1)
+        assert job.status == "processing" and job.attempts == 2 and job.error is None
+
+
+def test_old_failed_index_does_not_replace_new_revision(factory, monkeypatch):
+    from app import agent
+    def fail_after_edit(item):
+        with factory() as db:
+            job = db.get(KnowledgeIndexJob, 1)
+            job.revision += 1
+            job.status = "pending"
+            db.commit()
+        raise RuntimeError("old index failed")
+    monkeypatch.setattr(agent, "index_item", fail_after_edit)
+    assert tasks.process_knowledge.run(1) == "failed"
+    with factory() as db:
+        job = db.get(KnowledgeIndexJob, 1)
+        assert job.status == "pending" and job.revision == 2 and job.error is None
+
+
 def test_keywords_count_each_ticket_once():
     words = dict(tasks.keywords(["闪退闪退", "闪退"] ))
     assert words["闪退"] == 2

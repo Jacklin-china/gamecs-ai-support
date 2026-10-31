@@ -5,7 +5,7 @@ from collections import Counter
 from datetime import date, datetime, time, timedelta
 from celery import Celery
 from pydantic import BaseModel, Field
-from sqlalchemy import and_, or_, select, update, delete
+from sqlalchemy import and_, case, or_, select, update, delete
 from app.config import settings
 from app.db import SessionLocal
 from app.models import AnalysisJob, HotKeyword, Knowledge, KnowledgeIndexJob, Ticket, now
@@ -73,11 +73,9 @@ def process_analysis(job_id: int):
             return "completed" if updated.rowcount == 1 else "claim expired"
         except Exception:
             db.rollback()
-            current = db.get(AnalysisJob, job_id)
-            if current and current.status == "processing" and current.started_at == claimed_at:
-                current.status = "failed" if current.attempts >= 3 else "pending"
-                current.error = "工单分析失败，请检查模型服务配置"
-                db.commit()
+            db.execute(update(AnalysisJob).where(AnalysisJob.id == job_id, AnalysisJob.status == "processing", AnalysisJob.started_at == claimed_at).values(
+                status=case((AnalysisJob.attempts >= 3, "failed"), else_="pending"), error="工单分析失败，请检查模型服务配置"))
+            db.commit()
             return "failed"
 
 
@@ -118,11 +116,9 @@ def process_knowledge(item_id: int):
             return "completed" if completed.rowcount == 1 else "claim expired"
         except Exception:
             db.rollback()
-            current = db.get(KnowledgeIndexJob, item_id)
-            if current and current.revision == revision and current.status == "processing" and current.started_at == claimed_at:
-                current.status = "failed" if current.attempts >= 3 else "pending"
-                current.error = "知识索引更新失败，请检查模型和 Redis 服务"
-                db.commit()
+            db.execute(update(KnowledgeIndexJob).where(KnowledgeIndexJob.knowledge_id == item_id, KnowledgeIndexJob.revision == revision, KnowledgeIndexJob.status == "processing", KnowledgeIndexJob.started_at == claimed_at).values(
+                status=case((KnowledgeIndexJob.attempts >= 3, "failed"), else_="pending"), error="知识索引更新失败，请检查模型和 Redis 服务"))
+            db.commit()
             return "failed"
 
 
