@@ -27,8 +27,8 @@ def vector_store() -> RedisVectorStore:
     cfg = settings()
     if not cfg.siliconflow_api_key:
         raise HTTPException(503, "知识检索服务尚未配置")
-    embeddings = OpenAIEmbeddings(api_key=cfg.siliconflow_api_key, base_url=cfg.siliconflow_base_url, model=cfg.embedding_model, check_embedding_ctx_length=False)
-    return RedisVectorStore(embeddings, config=RedisConfig(redis_url=cfg.redis_url, index_name="gamecs_knowledge_v1", key_prefix="gamecs_knowledge_v1", embedding_dimensions=1024, metadata_schema=[{"name": "game_id", "type": "tag"}, {"name": "knowledge_id", "type": "tag"}, {"name": "content_hash", "type": "tag"}]))
+    model = embeddings()
+    return RedisVectorStore(model, config=RedisConfig(redis_url=cfg.redis_url, index_name="gamecs_knowledge_v1", key_prefix="gamecs_knowledge_v1", embedding_dimensions=1024, metadata_schema=[{"name": "game_id", "type": "tag"}, {"name": "knowledge_id", "type": "tag"}, {"name": "content_hash", "type": "tag"}]))
 
 
 def embeddings():
@@ -59,12 +59,21 @@ def index_item(item: Knowledge) -> None:
                 db.add(KnowledgeVector(knowledge_id=item_id, content_hash=expected_hash, model=settings().embedding_model, embedding=vector))
             db.commit()
         return
-    store = vector_store()
-    key = f"gamecs_knowledge_v1:{item.id}"
-    if not item.active:
-        store.delete(ids=[key])
-        return
-    store.add_texts([item.content], metadatas=[{"game_id": str(item.game_id), "knowledge_id": str(item.id), "content_hash": document_hash(item)}], keys=[key])
+    # Serialize Redis writes against edits of the authoritative MySQL row.
+    # An older worker must not overwrite a newer revision after a slow call.
+    from app.db import SessionLocal
+    item_id, expected_hash, active = item.id, document_hash(item), item.active
+    with SessionLocal() as db:
+        current = db.scalar(select(Knowledge).where(Knowledge.id == item_id).with_for_update())
+        if not current or current.active != active or document_hash(current) != expected_hash:
+            return
+        store = vector_store()
+        key = f"gamecs_knowledge_v1:{item_id}"
+        if not active:
+            store.delete(ids=[key])
+        else:
+            store.add_texts([current.content], metadatas=[{"game_id": str(current.game_id), "knowledge_id": str(item_id), "content_hash": expected_hash}], keys=[key])
+        db.commit()
 
 
 def retrieve(db: Session, game_id: int, question: str) -> list[dict]:

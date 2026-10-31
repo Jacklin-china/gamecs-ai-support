@@ -58,6 +58,8 @@ infra/                Docker Compose 配置
 
 需要 Docker Engine 和 Docker Compose。此方式创建独立的数据卷，不会导入其他数据库。
 
+对象存储容器使用与 MinIO API 兼容的 Silo；本地开发仍可使用现有 MinIO。已有 Compose 数据卷升级前应先备份，并在隔离副本上验证对象读取和恢复；本项目尚未验证所有历史 MinIO 数据格式的升级兼容性。
+
 1. 复制配置模板并填写**自己的**密码和密钥：
 
    ```bash

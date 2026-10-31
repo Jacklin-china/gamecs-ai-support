@@ -51,9 +51,11 @@ class SyntheticEmbeddings(Embeddings):
 
 
 def test_vector_index_game_filter_and_stale_detection(redis_stack, monkeypatch):
+    import app.db
     monkeypatch.setattr(agent, "OpenAIEmbeddings", lambda **kwargs: SyntheticEmbeddings())
     engine = create_engine("sqlite://")
     Base.metadata.create_all(engine)
+    monkeypatch.setattr(app.db, "SessionLocal", sessionmaker(bind=engine, expire_on_commit=False))
     try:
         with Session(engine, expire_on_commit=False) as db:
             first = Knowledge(id=1, game_id=1, title="first", content="first synthetic document", active=True)

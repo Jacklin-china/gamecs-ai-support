@@ -65,6 +65,34 @@ def test_local_vector_retrieval_respects_game_and_stale_documents(monkeypatch):
     engine.dispose()
 
 
+def test_redis_index_ignores_a_superseded_snapshot(monkeypatch):
+    import app.db
+    from sqlalchemy.orm import sessionmaker
+    from app.models import Knowledge
+    engine = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
+    Base.metadata.create_all(engine)
+    factory = sessionmaker(bind=engine, expire_on_commit=False)
+    monkeypatch.setattr(app.db, "SessionLocal", factory)
+    monkeypatch.setattr(agent.settings(), "local_mode", False)
+    writes = []
+    class Store:
+        def add_texts(self, texts, **kwargs):
+            writes.extend(texts)
+        def delete(self, **kwargs):
+            writes.append("deleted")
+    monkeypatch.setattr(agent, "vector_store", lambda: Store())
+    with factory() as db:
+        db.add(Knowledge(id=1, game_id=1, title="规则", content="new version", active=True))
+        db.commit()
+    stale = Knowledge(id=1, game_id=1, title="规则", content="old version", active=True)
+    agent.index_item(stale)
+    assert writes == []
+    with factory() as db:
+        agent.index_item(db.get(Knowledge, 1))
+    assert writes == ["new version"]
+    engine.dispose()
+
+
 def test_no_knowledge_does_not_return_unsupported_answer(monkeypatch):
     engine = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
     Base.metadata.create_all(engine)
