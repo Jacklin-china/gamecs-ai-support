@@ -41,6 +41,8 @@ services:
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
       SILICONFLOW_API_KEY: ${SILICONFLOW_API_KEY:-}
+      CHAT_PROVIDER: ${CHAT_PROVIDER:-deepseek}
+      SILICONFLOW_CHAT_MODEL: ${SILICONFLOW_CHAT_MODEL:-THUDM/GLM-4-9B-0414}
     ports: ["8000:8000"]
     depends_on:
       mysql: {condition: service_healthy}

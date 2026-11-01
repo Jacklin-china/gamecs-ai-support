@@ -19,11 +19,13 @@ uvicorn app.main:app --reload --port 18765
 
 登录默认按连接来源限制为每分钟 10 次，AI 对话按登录用户限制为每分钟 20 次。本地模式使用单进程内存，分布式模式使用 Redis，Redis 不可用时相关请求返回 503。反向代理部署必须正确配置可信代理和客户端地址，否则多个用户会共用同一来源限制；不要直接信任客户端提交的转发头。仅在隔离测试中可设置 `RATE_LIMIT_ENABLED=false`。
 
-本机 Windows 已配置好依赖后，可双击 `start-local.bat`，或在 `backend` 目录执行 `.\.venv\Scripts\python.exe scripts\start_local.py`，启动本地附件服务、后端与两个前端；需要先启动 MySQL。脚本不会终止已有程序，端口被占用时会提示检查。若没有本地 MinIO 程序，系统仍可启动，但附件功能不可用。
+本机 Windows 已配置好依赖后，可双击 `start-local.bat`，或在 `backend` 目录执行 `.\.venv\Scripts\python.exe scripts\start_local.py`，启动本地附件服务、后端与两个前端；需要先启动 MySQL，且数据库迁移应为最新版本。脚本不会终止已有程序；前端默认端口被占用时会选择其他空闲端口，并显示实际地址。后端和附件端口被占用时会停止并提示检查。若没有本地 MinIO 程序，系统仍可启动，但附件功能不可用。
 
 需要部署 Redis Stack 时，设置 `LOCAL_MODE=false`，并在另外两个终端启动 `celery -A app.tasks:celery worker --pool=solo --loglevel=info` 和 `celery -A app.tasks:celery beat --loglevel=info`。只运行一个调度器。生产环境应使用适合操作系统的 Celery worker。切换存储模式前先停止旧模式的后台进程；索引任务会检测存储位置变化并重新排队。
 
 分别在两个前端目录执行 `npm ci` 与 `npm run dev`，默认端口分别为 5173 和 5174。它们通过 Vite 代理访问本机 18765 端口；`VITE_API_BASE` 可在独立部署时指定 API 地址。首次安装空数据库可运行 `python scripts/create_admin.py` 创建管理员；迁移已有管理员后无需重新创建。
+
+对话模型通过 `CHAT_PROVIDER` 选择：默认 `deepseek` 使用 `DEEPSEEK_API_KEY` 和 `DEEPSEEK_MODEL`；设为 `siliconflow` 时使用已有的 `SILICONFLOW_API_KEY` 与 `SILICONFLOW_CHAT_MODEL`。知识向量始终使用 SiliconFlow。切换需重启 API 和 worker，模型能力、可用性及费用以服务商为准；系统不会在供应商之间自动回退或更改你的密钥。
 
 ## 迁移旧数据
 
@@ -45,5 +47,7 @@ uvicorn app.main:app --reload --port 18765
 MySQL 集成测试只允许连接本机上名称以 `gamecs_isolated_` 开头、已执行全部迁移且用户和分类表为空的临时数据库；设置 `MYSQL_TEST_URL` 后运行 `pytest -q tests/test_mysql_integration.py`。测试会向该数据库写入合成记录，不能指向业务库。CI 使用独立 MySQL 服务执行该测试。
 
 Redis Stack、Celery 和 Compose 的集成测试由 GitHub Actions 使用一次性服务执行；Redis 测试使用 `GAMECS_REDIS_TEST_URL=redis://127.0.0.1:16391/0`，并要求实例及索引为空，不能用于现有 Redis。模型与向量服务使用合成替身；真实模型测试结果另见 `evaluation/`。
+
+可选真实模型与 MySQL 测试需要独立、已迁移且为空的 `gamecs_isolated_*` 数据库，并将 `GAMECS_LIVE_AI_TEST_URL` 设为与 `DATABASE_URL` 相同的连接地址；以 `GAMECS_LIVE_CHAT_PROVIDER=deepseek` 或 `siliconflow` 选择供应商后运行 `pytest -q tests/test_live_ai_mysql.py`。该测试会调用外部模型并可能产生费用，不得连接业务库。
 
 本地可选对象存储兼容性测试使用 `MINIO_TEST_BINARY` 和 `SILO_TEST_BINARY` 指向两个可执行文件，然后运行 `pytest -q tests/test_silo_migration.py`。测试只创建临时目录：使用 MinIO 写入合成对象、用 Silo 读写、再切回 MinIO 校验。已验证 MinIO RELEASE.2025-09-07T16-13-09Z 与 Silo RELEASE.2026-10-26T00-00-00Z 的单节点基础读写回退；不代表所有历史对象、配置或集群部署均可无风险升级，升级前仍须备份并验证数据副本。

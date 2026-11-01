@@ -27,9 +27,9 @@ class Analysis(BaseModel):
 def analyze_text(content: str) -> Analysis:
     from langchain_openai import ChatOpenAI
     cfg = settings()
-    if not cfg.deepseek_api_key:
+    if not cfg.chat_api_key:
         raise RuntimeError("AI model is not configured")
-    model = ChatOpenAI(api_key=cfg.deepseek_api_key, base_url=cfg.deepseek_base_url, model=cfg.deepseek_model, timeout=30, max_retries=1)
+    model = ChatOpenAI(api_key=cfg.chat_api_key, base_url=cfg.chat_base_url, model=cfg.chat_model, timeout=30, max_retries=1)
     structured = model.with_structured_output(Analysis, method="json_mode")
     result = structured.invoke([("system", "分析游戏客服工单。返回 JSON 对象，字段 category、sentiment_score、suggest_reply。category 必须为 BUG、ADVICE、COMPLAINT、CONSULT 之一；sentiment_score 为 1 到 5。"), ("user", content)])
     if result.category not in {"BUG", "ADVICE", "COMPLAINT", "CONSULT"}:

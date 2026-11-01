@@ -3,7 +3,7 @@ import os
 import sys
 from pathlib import Path
 
-os.environ.update(LOCAL_MODE='true', LOCAL_AUTO_TASKS='false', RATE_LIMIT_ENABLED='false', DATABASE_URL='sqlite://', JWT_SECRET='isolated-browser-test-secret-at-least-32', CORS_ORIGINS='http://127.0.0.1:5175,http://127.0.0.1:5176', DEEPSEEK_API_KEY='', SILICONFLOW_API_KEY='')
+os.environ.update(LOCAL_MODE='true', LOCAL_AUTO_TASKS='false', RATE_LIMIT_ENABLED='false', DATABASE_URL='sqlite://', JWT_SECRET='isolated-browser-test-secret-at-least-32', CORS_ORIGINS='http://127.0.0.1:5175,http://127.0.0.1:5176', CHAT_PROVIDER='deepseek', DEEPSEEK_API_KEY='', SILICONFLOW_API_KEY='')
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from sqlalchemy import create_engine

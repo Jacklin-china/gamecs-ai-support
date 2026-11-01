@@ -118,6 +118,8 @@ Copy-Item .env.example .env
 
 编辑 `backend/.env`：将 `DATABASE_URL` 指向独立的 MySQL 数据库，设置至少 32 字符的 `JWT_SECRET`，本地开发设 `LOCAL_MODE=true`。按需配置 `MINIO_*`、`DEEPSEEK_API_KEY` 和 `SILICONFLOW_API_KEY`。对已有数据先备份并在隔离副本验证迁移。
 
+对话模型默认使用 DeepSeek；如需使用 SiliconFlow，请配置其密钥并设置 `CHAT_PROVIDER=siliconflow`，可用 `SILICONFLOW_CHAT_MODEL` 指定模型。向量索引仍需 SiliconFlow 密钥。服务商可能收费，切换后需重启后端与任务进程。
+
 ```powershell
 .\.venv\Scripts\python.exe -m alembic upgrade head
 .\.venv\Scripts\python.exe scripts\create_admin.py

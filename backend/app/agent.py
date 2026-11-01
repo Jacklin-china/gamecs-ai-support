@@ -110,7 +110,7 @@ def retrieve(db: Session, game_id: int, question: str) -> list[dict]:
 
 def answer(db: Session, user: User, game_id: int, question: str, conversation_id: str | None) -> dict:
     cfg = settings()
-    if not cfg.deepseek_api_key:
+    if not cfg.chat_api_key:
         raise HTTPException(503, "AI 对话服务尚未配置")
     conversation = db.get(Conversation, conversation_id) if conversation_id else None
     if conversation_id and (not conversation or conversation.user_id != user.id):
@@ -143,7 +143,7 @@ def answer(db: Session, user: User, game_id: int, question: str, conversation_id
                 return json.dumps([{"ticket_no": t.ticket_no, "title": t.title, "status": t.status} for t in rows], ensure_ascii=False)
 
         context = "\n\n".join(f"[{s['id']}] {s['title']}\n{s['content']}" for s in sources) or "没有找到相关知识资料。"
-        model = ChatOpenAI(api_key=cfg.deepseek_api_key, base_url=cfg.deepseek_base_url, model=cfg.deepseek_model, timeout=30, max_retries=1)
+        model = ChatOpenAI(api_key=cfg.chat_api_key, base_url=cfg.chat_base_url, model=cfg.chat_model, timeout=30, max_retries=1)
         saver_context = nullcontext(None) if cfg.local_mode else RedisSaver.from_conn_string(cfg.redis_url)
         with saver_context as saver:
             if saver is not None:

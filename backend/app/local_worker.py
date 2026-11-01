@@ -23,7 +23,7 @@ def local_worker(stop: Event):
                     db.execute(update(model).where(model.status == "processing", model.started_at < stale, model.attempts >= 3).values(status="failed", error="处理超时"))
                 db.execute(update(KnowledgeIndexJob).where(KnowledgeIndexJob.status == "completed", or_(KnowledgeIndexJob.index_backend.is_(None), KnowledgeIndexJob.index_backend != "local")).values(status="pending", attempts=0, revision=KnowledgeIndexJob.revision + 1, error=None))
                 db.commit()
-                analyses = db.scalars(select(AnalysisJob.id).where(AnalysisJob.status == "pending", AnalysisJob.attempts < 3).order_by(AnalysisJob.id).limit(10)).all() if settings().deepseek_api_key else []
+                analyses = db.scalars(select(AnalysisJob.id).where(AnalysisJob.status == "pending", AnalysisJob.attempts < 3).order_by(AnalysisJob.id).limit(10)).all() if settings().chat_api_key else []
                 vectors = db.scalars(select(KnowledgeIndexJob.knowledge_id).where(KnowledgeIndexJob.status == "pending", KnowledgeIndexJob.attempts < 3).order_by(KnowledgeIndexJob.knowledge_id).limit(10)).all() if settings().siliconflow_api_key else []
             for job_id in analyses:
                 if stop.is_set(): break

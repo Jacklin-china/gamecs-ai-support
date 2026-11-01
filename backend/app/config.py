@@ -1,4 +1,5 @@
 from functools import lru_cache
+from typing import Literal
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -15,14 +16,28 @@ class Settings(BaseSettings):
     deepseek_api_key: str = ""
     deepseek_base_url: str = "https://api.deepseek.com"
     deepseek_model: str = "deepseek-chat"
+    chat_provider: Literal["deepseek", "siliconflow"] = "deepseek"
     siliconflow_api_key: str = ""
     siliconflow_base_url: str = "https://api.siliconflow.cn/v1"
     embedding_model: str = "BAAI/bge-m3"
+    siliconflow_chat_model: str = "THUDM/GLM-4-9B-0414"
     minio_endpoint: str = "localhost:9000"
     minio_access_key: str = ""
     minio_secret_key: str = ""
     minio_bucket: str = "gamecs"
     minio_secure: bool = False
+
+    @property
+    def chat_api_key(self) -> str:
+        return self.siliconflow_api_key if self.chat_provider == "siliconflow" else self.deepseek_api_key
+
+    @property
+    def chat_base_url(self) -> str:
+        return self.siliconflow_base_url if self.chat_provider == "siliconflow" else self.deepseek_base_url
+
+    @property
+    def chat_model(self) -> str:
+        return self.siliconflow_chat_model if self.chat_provider == "siliconflow" else self.deepseek_model
 
 
 @lru_cache

@@ -25,7 +25,7 @@ def main():
     args = parser.parse_args()
     if not args.live:
         parser.error('Pass --live to run paid provider calls on synthetic data')
-    if not settings().deepseek_api_key or not settings().siliconflow_api_key:
+    if not settings().chat_api_key or not settings().siliconflow_api_key:
         parser.error('Configure both chat and embedding services first')
     cases = json.loads(Path(__file__).with_name('cases.json').read_text(encoding='utf-8'))
     engine = create_engine('sqlite://', connect_args={'check_same_thread': False}, poolclass=StaticPool)
@@ -51,7 +51,7 @@ def main():
             except Exception as exc:
                 results.append({'id':case['id'], 'error_type':type(exc).__name__, 'seconds':round(time.monotonic()-started, 3)})
     engine.dispose()
-    print(json.dumps({'dataset':'synthetic-v1', 'embedding_model':settings().embedding_model, 'chat_model':settings().deepseek_model, 'results':results}, ensure_ascii=False, indent=2))
+    print(json.dumps({'dataset':'synthetic-v1', 'embedding_model':settings().embedding_model, 'chat_model':settings().chat_model, 'results':results}, ensure_ascii=False, indent=2))
 
 
 if __name__ == '__main__':

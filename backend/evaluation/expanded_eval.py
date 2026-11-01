@@ -47,7 +47,7 @@ def main():
     if not args.live:
         parser.error("--live is required because this calls external services")
     cfg = settings()
-    if not cfg.deepseek_api_key or not cfg.siliconflow_api_key:
+    if not cfg.chat_api_key or not cfg.siliconflow_api_key:
         parser.error("Configure both model and embedding services")
     dataset = json.loads(Path(__file__).with_name("expanded_cases.json").read_text(encoding="utf-8"))
     engine = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
@@ -112,7 +112,7 @@ def main():
         "end_to_end_errors": sum("error_type" in x for x in answers)
     }
     report = {"dataset": dataset["dataset"], "recorded_at_utc": datetime.now(timezone.utc).isoformat(),
-        "environment": {"python": platform.python_version(), "platform": platform.platform(), "database": "isolated SQLite in-memory", "mode": "local single process", "embedding_model": cfg.embedding_model, "chat_model": cfg.deepseek_model},
+        "environment": {"python": platform.python_version(), "platform": platform.platform(), "database": "isolated SQLite in-memory", "mode": "local single process", "embedding_model": cfg.embedding_model, "chat_model": cfg.chat_model},
         "limitations": ["Synthetic, author-labelled, small sample; no production traffic or independent annotation", "No human grounding review, token usage or cost measurement", "Latency includes external provider calls and is not a load or throughput benchmark", "Errors count as failures in ratios"],
         "summary": summary, "retrieval_results": records, "end_to_end_results": answers}
     args.output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
