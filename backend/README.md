@@ -50,4 +50,11 @@ Redis Stack、Celery 和 Compose 的集成测试由 GitHub Actions 使用一次�
 
 可选真实模型与 MySQL 测试需要独立、已迁移且为空的 `gamecs_isolated_*` 数据库，并将 `GAMECS_LIVE_AI_TEST_URL` 设为与 `DATABASE_URL` 相同的连接地址；以 `GAMECS_LIVE_CHAT_PROVIDER=deepseek` 或 `siliconflow` 选择供应商后运行 `pytest -q tests/test_live_ai_mysql.py`。该测试会调用外部模型并可能产生费用，不得连接业务库。
 
+浏览器的真实依赖测试分为两项：
+
+- `frontend/e2e/tests/real-storage.spec.cjs` 在 CI 中启动一次性 Silo 服务，验证合成玩家上传 PNG、客服通过页面下载并逐字节比较。数据库为内存 SQLite，AI 仍为模拟；测试只使用专门的测试账号、固定本地端口和随机桶，不连接现有服务。不要将 CI 示例配置用于正式环境。
+- `frontend/e2e/tests/live-ai.spec.cjs` 可显式调用真实对话和向量服务，数据库、账号与知识均为临时合成数据，**会产生模型服务费用**。先按仓库根目录说明安装测试依赖；在本机终端设置 `SILICONFLOW_API_KEY`，并根据 `CHAT_PROVIDER` 设置 `DEEPSEEK_API_KEY` 或使用 SiliconFlow 对话服务。不要将密钥写入仓库。随后在 `frontend/e2e` 设置 `GAMECS_E2E_LIVE_AI=1` 并运行 `npx playwright test live-ai.spec.cjs`；Windows 可通过 `E2E_PYTHON` 指定虚拟环境 Python。测试只检查回答非空、显示合成知识来源，不评价答案准确性；运行完成后解除该环境变量。未配置密钥时，勿启用此测试。
+
+两项测试分别验证真实存储和真实模型，不能当作同一次全栈真实依赖测试或生产上线证明。真实模型测试不会在公开 CI 自动运行，避免暴露密钥与产生未经控制的费用。界面截图的可选重现方式是在 `frontend/e2e` 设置 `GAMECS_CAPTURE_DEMO=1` 后运行 `npx playwright test showcase.spec.cjs`；它使用模拟模型和虚构数据，不应使用真实玩家信息。
+
 本地可选对象存储兼容性测试使用 `MINIO_TEST_BINARY` 和 `SILO_TEST_BINARY` 指向两个可执行文件，然后运行 `pytest -q tests/test_silo_migration.py`。测试只创建临时目录：使用 MinIO 写入合成对象、用 Silo 读写、再切回 MinIO 校验。已验证 MinIO RELEASE.2025-09-07T16-13-09Z 与 Silo RELEASE.2026-10-26T00-00-00Z 的单节点基础读写回退；不代表所有历史对象、配置或集群部署均可无风险升级，升级前仍须备份并验证数据副本。

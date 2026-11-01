@@ -31,6 +31,22 @@ GameCS is an open-source game support project built with FastAPI and Vue 3. It c
 
 典型流程：**玩家提交问题 → 客服接单并回复 → 客服填写处理结果 → 玩家确认并评价**。遇到常见问题时，玩家也可以先询问知识库助手；知识不足时转人工工单。
 
+## 界面预览
+
+以下为隔离测试环境的真实界面截图：账号、游戏和工单均为虚构数据；截图中的知识检索和 AI 回答使用模拟结果。
+
+**玩家提交问题**
+
+![玩家填写游戏问题和工单内容](docs/screenshots/player-ticket.png)
+
+**客服接单与回复**
+
+![客服工作台展示工单详情和回复](docs/screenshots/staff-ticket.png)
+
+**客服助手回答与知识来源**
+
+![玩家查看客服助手回答和参考来源](docs/screenshots/assistant-answer.png)
+
 ## 技术架构
 
 ```mermaid
@@ -164,7 +180,7 @@ cd backend
 
 在两个前端目录分别运行 `npm ci` 和 `npm run build`。浏览器流程测试：先安装后端、两端和 `frontend/e2e` 依赖，再在 `frontend/e2e` 运行 `npx playwright install chromium` 和 `npm test`。Windows 可通过 `E2E_PYTHON` 指定后端虚拟环境的 Python 路径。该测试使用独立端口和内存数据库，不连接业务数据。
 
-浏览器测试的 AI 问答使用合成知识与模拟模型，附件页面测试使用模拟响应；真实模型测试见下方 AI 评测，真实 MinIO 附件读写与权限测试见后端测试说明。MySQL 集成测试需要一个独立、已迁移的空测试库，不能指向业务库。
+常规浏览器测试的 AI 问答使用合成知识与模拟模型，原附件页面测试使用模拟响应。另有隔离的浏览器真实存储测试，使用一次性 S3 兼容服务验证玩家上传、客服读取及文件内容；CI 运行状态以实际 Actions 结果为准。真实模型浏览器测试需要显式配置服务，见 [后端测试说明](backend/README.md)；该测试只检查回答非空和来源，不能证明回答正确。MySQL 集成测试需要独立、已迁移的空测试库，不能指向业务库。
 
 MinIO 和 MySQL 的隔离集成测试需要额外环境变量，具体见 [后端测试说明](backend/README.md)。GitHub Actions 配置包括后端测试、迁移检查、MySQL 集成测试、前端构建和浏览器流程；运行状态以仓库实际 Actions 结果为准。
 

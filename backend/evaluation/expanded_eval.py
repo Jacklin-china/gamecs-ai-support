@@ -43,19 +43,22 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--live", action="store_true", help="Use paid external model services")
     parser.add_argument("--output", type=Path, required=True, help="Write synthetic results to this file")
+    parser.add_argument("--dataset", type=Path, default=Path(__file__).with_name("expanded_cases.json"), help="Synthetic labelled dataset")
+    parser.add_argument("--answer-all", action="store_true", help="Run complete answer flow for every case (additional provider calls)")
     args = parser.parse_args()
     if not args.live:
         parser.error("--live is required because this calls external services")
     cfg = settings()
     if not cfg.chat_api_key or not cfg.siliconflow_api_key:
         parser.error("Configure both model and embedding services")
-    dataset = json.loads(Path(__file__).with_name("expanded_cases.json").read_text(encoding="utf-8"))
+    dataset = json.loads(args.dataset.read_text(encoding="utf-8"))
     engine = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
     Base.metadata.create_all(engine)
     records = []
     answers = []
     # Fixed in advance to keep the end-to-end subset reproducible and affordable.
-    answer_ids = {"p01", "p03", "p07", "p11", "p15", "n01", "n05", "n07", "n08", "n09"}
+    answer_ids = ({case["id"] for case in dataset["cases"]} if args.answer_all else
+                  {"p01", "p03", "p07", "p11", "p15", "n01", "n05", "n07", "n08", "n09"})
     try:
         with Session(engine, expire_on_commit=False) as db:
             user = User(username="synthetic_eval", display_name="synthetic_eval", password_hash="unused", role="player")

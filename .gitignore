@@ -20,6 +20,17 @@ Thumbs.db
 
 # Env
 .env
+.env.*
+!.env.example
+.envrc
+*.pem
+*.key
+*.db
+*.sqlite
+*.sqlite3
+*简历*
+*证件照*
+*resume*
 application-local.yml
 
 # Node
@@ -42,3 +53,4 @@ generated-images/
 frontend/admin/.chrome-preview/
 test-results/
 playwright-report/
+backend/evaluation/*.local.json

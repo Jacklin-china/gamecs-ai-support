@@ -140,3 +140,32 @@ jobs:
         working-directory: frontend/e2e
       - run: npm test
         working-directory: frontend/e2e
+  browser-real-storage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GAMECS_E2E_REAL_STORAGE: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: python -m pip install -e './backend[test]'
+      - run: npm ci --prefix frontend/player
+      - run: npm ci --prefix frontend/admin
+      - run: npm ci --prefix frontend/e2e
+      - run: npx playwright install --with-deps chromium
+        working-directory: frontend/e2e
+      - name: Start disposable S3-compatible storage
+        run: |
+          docker run -d --name gamecs-e2e-silo -p 127.0.0.1:19000:9000 \
+            -e MINIO_ROOT_USER=gamecs-e2e-only -e MINIO_ROOT_PASSWORD=gamecs-e2e-only-secret \
+            docker.io/pgsty/silo:RELEASE.2026-10-26T00-00-00Z server /data
+          curl --fail --retry 30 --retry-delay 1 --retry-connrefused http://127.0.0.1:19000/minio/health/ready
+      - name: Verify browser upload and download using real storage
+        run: npx playwright test real-storage.spec.cjs
+        working-directory: frontend/e2e

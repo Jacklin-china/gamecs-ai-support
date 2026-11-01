@@ -1,0 +1,40 @@
+// This test requires the disposable S3-compatible service from the CI job.
+// The API uses an in-memory DB and the AI provider remains simulated.
+const { test, expect } = require('@playwright/test')
+const fs = require('fs')
+
+test.skip(process.env.GAMECS_E2E_REAL_STORAGE !== '1', 'Requires the isolated CI storage service')
+
+test('player uploads and staff downloads a real stored attachment', async ({ browser }) => {
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=', 'base64')
+  const player = await browser.newPage()
+  await player.goto('http://127.0.0.1:5175/')
+  await player.getByRole('textbox', {name:'用户名'}).fill('e2e_player')
+  await player.getByRole('textbox', {name:'密码'}).fill('test-password')
+  await player.getByRole('button', {name:'登录', exact:false}).click()
+  await player.getByRole('button', {name:'提交问题', exact:true}).click()
+  await player.getByRole('combobox', {name:'游戏', exact:true}).selectOption({label:'测试游戏'})
+  await player.getByRole('combobox', {name:'版本'}).selectOption({label:'测试版本'})
+  await player.getByRole('combobox', {name:'问题分类'}).selectOption({label:'测试分类'})
+  await player.getByRole('textbox', {name:'问题标题'}).fill('真实附件隔离测试')
+  await player.getByRole('textbox', {name:'详细描述'}).fill('合成测试工单')
+  await player.getByRole('button', {name:'提交工单'}).click()
+  await expect(player.getByRole('heading', {name:'真实附件隔离测试'})).toBeVisible()
+  await player.locator('input[type=file]').setInputFiles({name:'synthetic.png', mimeType:'image/png', buffer:png})
+  await expect(player.getByRole('button', {name:/synthetic\.png/})).toBeVisible()
+
+  const staff = await browser.newPage()
+  await staff.goto('http://127.0.0.1:5176/')
+  await staff.getByRole('textbox', {name:'用户名'}).fill('e2e_staff')
+  await staff.getByRole('textbox', {name:'密码'}).fill('test-password')
+  await staff.getByRole('button', {name:'登录工作台'}).click()
+  await staff.getByRole('button', {name:'02 待接工单'}).click()
+  await staff.locator('article.ticket-row').filter({hasText:'真实附件隔离测试'}).getByRole('button', {name:'查看详情'}).click()
+  const downloadPromise = staff.waitForEvent('download')
+  await staff.getByRole('button', {name:'下载 synthetic.png'}).click()
+  const download = await downloadPromise
+  expect(download.suggestedFilename()).toBe('synthetic.png')
+  expect(fs.readFileSync(await download.path())).toEqual(png)
+  await player.close()
+  await staff.close()
+})
