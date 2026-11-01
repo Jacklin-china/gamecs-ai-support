@@ -1,8 +1,19 @@
 # GameCS · 游戏智能客服平台
 
+![MIT license](https://img.shields.io/badge/license-MIT-blue.svg)
+![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB)
+![Vue](https://img.shields.io/badge/Vue-3-42b883)
+![GitHub Actions](https://github.com/Jacklin-china/gamecs-ai-support/actions/workflows/ci.yml/badge.svg)
+
 GameCS 是一个前后端分离的游戏客服项目：玩家提交问题、查看进度并使用知识问答；客服处理工单、维护知识库并查看统计；管理员管理账号与审计记录。项目结合工单流转、异步 AI 分析、游戏隔离的知识检索和历史数据迁移工具，适合学习和演示客服业务流程。
 
 > 项目仍在完善中，尚未宣称生产级上线。仓库不包含真实数据库、历史向量、附件、账号或 API 密钥；首次运行需要自行初始化数据和配置服务。
+
+**适合谁使用：** 希望学习客服业务建模、异步任务、知识检索或前后端联调的开发者。项目提供玩家端与客服工作台，可作为个人项目继续扩展。
+
+**从这里开始：** [功能概览](#功能概览) · [技术架构](#技术架构) · [Docker 快速开始](#快速开始docker-compose) · [本地开发](#本地开发) · [测试和评测](#测试和评测) · [许可证](#许可证)
+
+GameCS is an open-source game support project built with FastAPI and Vue 3. It combines a ticket workflow, asynchronous analysis, and game-scoped knowledge retrieval.
 
 ## 功能概览
 
@@ -17,6 +28,8 @@ GameCS 是一个前后端分离的游戏客服项目：玩家提交问题、查�
 - **异步任务**：分析与知识索引使用任务记录、领取状态、重试和定时恢复；本地单进程模式不依赖 Redis。
 - **可追踪与安全**：角色权限由后端校验；敏感接口设有限流；记录请求编号和工单操作，不在请求日志中记录密码和请求体。
 - **设计与测试**：玩家端与工作台使用统一的夜航票券视觉；包含后端测试、隔离浏览器流程测试以及合成样本 AI 评测。
+
+典型流程：**玩家提交问题 → 客服接单并回复 → 客服填写处理结果 → 玩家确认并评价**。遇到常见问题时，玩家也可以先询问知识库助手；知识不足时转人工工单。
 
 ## 技术架构
 
@@ -169,4 +182,8 @@ AI 评测使用合成数据，运行方式和结果见 [评测说明](backend/ev
 
 ## 许可证
 
-本项目包含基于 RuoYi 的历史代码与改造内容，保留原有 [MIT 许可证及版权声明](LICENSE)。
+仓库采用 [MIT 许可证](LICENSE)，并保留 RuoYi 原有版权声明。项目源于基于 [RuoYi-Vue](https://github.com/yangzongzhuan/RuoYi-Vue) 的历史代码和后续改造，感谢原项目及其贡献者。
+
+第三方依赖、模型服务及对象存储镜像分别适用各自的许可证和服务条款；仓库中的图片等素材来源与可再分发范围尚待逐项核实，复用前请确认相应权利。MIT 许可本身不替代第三方授权。
+
+欢迎通过 GitHub Issue 反馈问题或提交 Pull Request。提交时请说明复现步骤、修改目的与验证方法，并避免上传真实玩家信息、备份、密钥或私人配置。
