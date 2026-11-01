@@ -165,7 +165,7 @@ jobs:
           docker run -d --name gamecs-e2e-silo -p 127.0.0.1:19000:9000 \
             -e MINIO_ROOT_USER=gamecs-e2e-only -e MINIO_ROOT_PASSWORD=gamecs-e2e-only-secret \
             docker.io/pgsty/silo:RELEASE.2026-10-26T00-00-00Z server /data
-          curl --fail --retry 30 --retry-delay 1 --retry-connrefused http://127.0.0.1:19000/minio/health/ready
+          curl --fail --retry 30 --retry-delay 1 --retry-all-errors --max-time 2 http://127.0.0.1:19000/minio/health/ready
       - name: Verify browser upload and download using real storage
         run: npx playwright test real-storage.spec.cjs
         working-directory: frontend/e2e
